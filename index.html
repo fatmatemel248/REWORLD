@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REWORLD — Bağış için ikinci şans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/reworld.css" />
+</head>
+<body class="theme-home">
+  <div class="bg-overlay" style="background-image: url('assets/img/bg-home.png')"></div>
+  <p class="recycle-band"><strong>İyilik Döngüsü:</strong> Dünyayı değiştirmek istiyorsan, elindeki fazlalığı paylaşarak başla.</p>
+
+  <header class="site-nav">
+    <a class="logo" href="index.html">
+      <img src="assets/img/logo-mark.png" width="40" height="40" alt="" />
+      REWORLD
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" aria-current="page">Ana Sayfa</a></li>
+      <li><a href="ilanlar.html">İlanlar</a></li>
+      <li><a href="kitaplar.html">Kitaplar</a></li>
+      <li><a href="kiyafetler.html">Kıyafetler</a></li>
+      <li><a href="gida.html">Gıda</a></li>
+      <li><a href="bagis.html">Bağış Yap</a></li>
+    </ul>
+    <a class="btn-cta" href="bagis.html">Eşya listele</a>
+  </header>
+
+  <main>
+    <section class="hero hero--split">
+      <div class="hero-copy">
+        <p class="hero-badge">Ücret yok · Yalnızca kargo bedeli</p>
+        <h1>Eşyana yeni bir dünya, birine sessiz bir destek</h1>
+        <p class="hero-lead" data-site-policy>
+          REWORLD’da listelenen tüm eşyalar bağıştır. Platform veya aracı ücreti yoktur; yalnızca kargo masrafı konuşulur.
+        </p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="bagis.html">Bağış ilanı oluştur</a>
+          <a class="btn-ghost" href="kitaplar.html">Talep edilen eşyalara bak</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/img/reworld-hero.png" width="480" height="360" alt="Geri dönüşüm ve doğa illüstrasyonu" />
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <p class="section-label">İlke</p>
+      <h2>Komisyon yok, gönüllülük var</h2>
+      <p class="section-intro">
+        Bağışçı ile alıcı doğrudan iletişim kurar. Eşyanın kendisi ücretsizdir; aranızdaki tek maddi konu kargodur — bunu da birlikte netleştirirsiniz.
+      </p>
+      <div class="principle">
+        <h3>Neden sadece kargo?</h3>
+        <p>
+          Çünkü amacımız geri dönüşüm ve dayanışma: eşyayı çöpe değil, ihtiyacına indirmek. Satış, komisyon veya gizli ücret bu hikâyeye ait değil.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <p class="section-label">Üç başlık</p>
+      <h2>Konulmak istenen eşyalar</h2>
+      <p class="section-intro">
+        Her kategoride talep örnekleri ve açıklamalar ayrı sayfalarda. Görseller projedeki görsel klasöründen yüklenir.
+      </p>
+      <div class="grid-3">
+        <a class="cat-card" href="kitaplar.html">
+          <span class="cat-thumb"><img src="assets/img/kategori-kitap.svg" width="72" height="72" alt="" /></span>
+          <h3>Kitaplar</h3>
+          <p>Ders kitaplarından edebiyata; okuma kültürünü büyüten her sayfa yeniden dolaşıma girer.</p>
+          <span class="link-hint">Kitap talep listesi →</span>
+        </a>
+        <a class="cat-card" href="kiyafetler.html">
+          <span class="cat-thumb"><img src="assets/img/kategori-kiyafet.svg" width="72" height="72" alt="" /></span>
+          <h3>Kıyafetler</h3>
+          <p>Temiz, kullanılabilir giysiler mevsim ve beden ihtiyaçlarına göre özetlenir.</p>
+          <span class="link-hint">Kıyafet talep listesi →</span>
+        </a>
+        <a class="cat-card" href="gida.html">
+          <span class="cat-thumb"><img src="assets/img/kategori-gida.svg" width="72" height="72" alt="" /></span>
+          <h3>Gıda</h3>
+          <p>Kuru gıda ve uzun ömürlü ürünler; güvenli son tüketim bilgisi ile paylaşılır.</p>
+          <span class="link-hint">Gıda talep listesi →</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <p class="section-label">Örnek İlanlar</p>
+      <h2>Yardımlaşmanın Başladığı Yer</h2>
+      <p class="section-intro">
+        Platformumuzda listelenen taleplerin ve bağışların nasıl göründüğüne dair birkaç örnek. Sen de form doldurarak kendi ilanını saniyeler içinde oluşturabilir; bu iyilik döngüsüne katılabilirsin.
+      </p>
+      <div id="ilan-listesi" class="ilan-grid" data-reworld-listings></div>
+      <p class="ilan-hata" id="ilan-hata" hidden>Gömülü yedek veri kullanılıyor (JSON isteği başarısız veya dosya protokolü).</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-brand">♻ REWORLD</p>
+    <p class="footer-quote">“Kullanmadığın şey, başkasının ihtiyacı olabilir.”</p>
+    <ul class="footer-nav">
+      <li><a href="index.html">Ana Sayfa</a></li>
+      <li><a href="ilanlar.html">İlanlar</a></li>
+      <li><a href="kitaplar.html">Kitaplar</a></li>
+      <li><a href="kiyafetler.html">Kıyafetler</a></li>
+      <li><a href="gida.html">Gıda</a></li>
+      <li><a href="bagis.html">Bağış Yap</a></li>
+    </ul>
+    <p class="copy">© 2026 REWORLD — Kâr amacı gütmez.</p>
+  </footer>
+
+  <script type="application/json" id="reworld-ilan-embed">
+  {"ilanlar":[{"id":"e1","kategori":"kitap","baslik":"Örnek İlham — Sapiens","aciklama":"Platforma eklenecek ilk bağışınız burada görünebilir.","sehir":"İstanbul","gorsel":"assets/img/kategori-kitap.svg"}]}
+  </script>
+  <div id="ai-chatbot" class="chatbot-container collapsed">
+    <div class="chatbot-header" onclick="toggleChat()">
+      <span class="chatbot-title">✨ REWORLD Asistan</span>
+      <button class="chatbot-close" id="chat-toggle-icon">▲</button>
+    </div>
+    <div class="chatbot-body" id="chatbot-body">
+      <div class="chat-message ai-message">Merhaba! Ben REWORLD dijital asistanınızım. Platformumuz, eşya bağışı veya sürdürülebilirlik hakkında aklınıza takılan her şeyi sorabilirsiniz. 🌿</div>
+    </div>
+    <div class="chatbot-input-area">
+      <input type="text" id="chat-input" placeholder="Sormak istediğinizi yazın..." onkeypress="handleChatKey(event)" />
+      <button onclick="sendChatMessage()" class="chat-send-btn">Gönder</button>
+    </div>
+  </div>
+
+  <button class="chatbot-floating-btn" onclick="toggleChat()">✨ Asistan</button>
+
+  <script src="assets/js/reworld.js"></script>
+</body>
+</html>
+

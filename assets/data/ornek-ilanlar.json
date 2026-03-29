@@ -1,0 +1,28 @@
+{
+  "ilanlar": [
+    {
+      "id": "1",
+      "kategori": "kitap",
+      "baslik": "Suç ve Ceza — Dostoyevski",
+      "aciklama": "Çok iyi durumda, altı çizili değil. 2019 Türkçe baskı.",
+      "sehir": "İstanbul",
+      "gorsel": "assets/img/kategori-kitap.svg"
+    },
+    {
+      "id": "2",
+      "kategori": "kiyafet",
+      "baslik": "Kış montu (L beden)",
+      "aciklama": "Bir sezon giyildi, lacivert, kapüşonlu.",
+      "sehir": "Ankara",
+      "gorsel": "assets/img/kategori-kiyafet.svg"
+    },
+    {
+      "id": "3",
+      "kategori": "gida",
+      "baslik": "Kuru bakliyat seti",
+      "aciklama": "Nohut, mercimek; kapalı paket, SKT 2026.",
+      "sehir": "İzmir",
+      "gorsel": "assets/img/kategori-gida.svg"
+    }
+  ]
+}
