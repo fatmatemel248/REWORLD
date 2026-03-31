@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>İlan Detayları — REWORLD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/reworld.css" />
+  <style>
+    .detay-wrapper {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 2.5rem;
+      max-width: 800px;
+      margin: -2rem auto 4rem auto;
+      box-shadow: 0 10px 30px rgba(47, 91, 74, 0.08);
+      position: relative;
+      z-index: 10;
+      text-align: left;
+    }
+    .detay-image {
+      width: 100%;
+      max-height: 450px;
+      object-fit: contain;
+      background: #f4f8f5;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+    .detay-container h3 {
+      font-family: 'Fraunces', serif;
+      color: var(--primary-dark);
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+    }
+    .detay-desc {
+      color: var(--text-color);
+      line-height: 1.8;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      white-space: pre-wrap;
+    }
+    .contact-box {
+      background: rgba(43, 205, 105, 0.05);
+      border-left: 5px solid var(--primary-main);
+      padding: 1.5rem 2rem;
+      border-radius: 0 12px 12px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .contact-box h4 {
+      margin: 0 0 0.5rem 0;
+      color: var(--primary-main);
+      font-size: 1.2rem;
+    }
+    .contact-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.1rem;
+      color: var(--primary-dark);
+      font-weight: 500;
+    }
+    .contact-row span {
+      font-weight: 400;
+      color: var(--text-color);
+    }
+    .detay-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      font-size: 0.95rem;
+      color: #777;
+    }
+    .btn-geri {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--primary-main);
+      text-decoration: none;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      transition: opacity 0.3s;
+    }
+    .btn-geri:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+
+<body class="theme-listings">
+  <div class="bg-overlay" style="background-image: url('assets/img/hero-nature.png'); opacity: 0.15;"></div>
+  <p class="recycle-band"><strong>Keşfet ve Paylaş:</strong> İyilik dolaştıkça çoğalır. Göz atın ve bir eşyaya ikinci şans verin.</p>
+
+  <header class="site-nav">
+    <a class="logo" href="index.html">
+      <img src="assets/img/logo-mark.png" width="40" height="40" alt="" />
+      REWORLD
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Ana Sayfa</a></li>
+      <li><a href="ilanlar.html">İlanlar</a></li>
+      <li><a href="kitaplar.html">Kitaplar</a></li>
+      <li><a href="kiyafetler.html">Kıyafetler</a></li>
+      <li><a href="gida.html">Gıda</a></li>
+      <li><a href="bagis.html">Bağış Yap</a></li>
+    </ul>
+    <div id="auth-buttons" class="auth-group"></div>
+  </header>
+
+  <main>
+    <div class="page-hero" style="padding-bottom: 5rem;">
+      <p id="detay-kategori" class="section-label" style="margin-bottom: 0.5rem;">Kategori</p>
+      <h1 id="detay-baslik">Yükleniyor...</h1>
+    </div>
+
+    <section class="section section-alt" style="padding-top: 0;">
+      <div id="detay-loading" style="text-align: center; font-size: 1.2rem; color: #666; padding: 2rem;">
+        İlan bilgileri getiriliyor...
+      </div>
+      
+      <div id="detay-content" class="detay-wrapper" style="display: none;">
+        <a href="javascript:history.back()" class="btn-geri">← Geri Dön</a>
+        
+        <img id="detay-gorsel" class="detay-image" src="" alt="İlan Görseli" />
+        
+        <div class="detay-container">
+          <h3>Eşya Hakkında</h3>
+          <div id="detay-aciklama" class="detay-desc">Yükleniyor...</div>
+          
+          <div class="contact-box">
+            <h4>İletişim Bilgileri</h4>
+            <div class="contact-row">📍 Konum: <span id="detay-sehir">...</span></div>
+            <div class="contact-row">📞 İletişim: <span id="detay-iletisim">...</span></div>
+          </div>
+          
+          <div class="detay-footer">
+            <span id="detay-tarih-bilgi">Tarih: ...</span>
+            <span id="detay-id-bilgi">İlan Numarası: ...</span>
+          </div>
+        </div>
+      </div>
+      
+      <div id="detay-error" style="display:none; text-align:center; padding: 3rem; background: #fff; max-width: 600px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        <h3 style="color: #db7c92; font-family: 'Fraunces', serif;">İlan Bulunamadı</h3>
+        <p style="color: #555; margin-bottom: 1.5rem;">Aradığınız ilan yayından kaldırılmış veya id hatalı olabilir.</p>
+        <a href="ilanlar.html" class="btn-cta">Tüm İlanlara Dön</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-brand">♻ REWORLD</p>
+    <p class="footer-quote">“Paylaştığın senindir, sakladığın ziyan olur.”</p>
+    <ul class="footer-nav">
+      <li><a href="index.html">Ana Sayfa</a></li>
+      <li><a href="ilanlar.html">İlanlar</a></li>
+      <li><a href="kitaplar.html">Kitaplar</a></li>
+      <li><a href="kiyafetler.html">Kıyafetler</a></li>
+      <li><a href="gida.html">Gıda</a></li>
+      <li><a href="bagis.html">Bağış Yap</a></li>
+    </ul>
+    <p class="copy">© 2026 REWORLD</p>
+  </footer>
+
+  <div class="toast-message" id="toast"></div>
+  <div id="ai-chatbot" class="chatbot-container collapsed">
+    <div class="chatbot-header" onclick="toggleChat()">
+      <span class="chatbot-title">✨ REWORLD Asistan</span>
+      <button class="chatbot-close" id="chat-toggle-icon">▲</button>
+    </div>
+    <div class="chatbot-body" id="chatbot-body">
+      <div class="chat-message ai-message">Merhaba! Ben REWORLD dijital asistanınızım. Platformumuz, eşya bağışı veya sürdürülebilirlik hakkında aklınıza takılan her şeyi sorabilirsiniz. 🌿</div>
+    </div>
+    <div class="chatbot-input-area">
+      <input type="text" id="chat-input" placeholder="Sormak istediğinizi yazın..." onkeypress="handleChatKey(event)" />
+      <button onclick="sendChatMessage()" class="chat-send-btn">Gönder</button>
+    </div>
+  </div>
+  <button class="chatbot-floating-btn" onclick="toggleChat()">✨ Asistan</button>
+  <script src="assets/js/reworld.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if(typeof window.loadDetay === "function") {
+            window.loadDetay();
+        }
+    });
+  </script>
+</body>
+
+</html>

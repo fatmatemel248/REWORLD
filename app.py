@@ -4,20 +4,35 @@ Statik HTML + assets sunumu ve /api/* uçları
 """
 
 import os
+from dotenv import load_dotenv
 import sqlite3
 import json
 import urllib.request
 import urllib.error
 import re
 import uuid
+import google.generativeai as genai
+import webbrowser
+import threading
 
-from flask import Flask, abort, jsonify, request, send_from_directory
+from flask import Flask, abort, jsonify, request, send_from_directory, session
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash, check_password_hash
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(ROOT, "yenidehayat.db")
+TEMPLETES_PATH = os.path.join(ROOT, "templetes")
+# .env dosyasındaki verileri sisteme yükle
+load_dotenv()
 
-GEMINI_API_KEY = "AIzaSyCOoFg0ubL63EjfShsySBwoY-Kg5X3dvGQ"
+# Artık anahtarı güvenli bir şekilde değişkene atayabiliriz
+raw_key = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = raw_key.strip() if raw_key else None
+
+if not GEMINI_API_KEY:
+    print("HATA: GEMINI_API_KEY .env dosyasında bulunamadı, özellikler çalışmayacak!")
+else:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 ALLOWED_HTML = {
     "index.html",
@@ -26,10 +41,26 @@ ALLOWED_HTML = {
     "kiyafetler.html",
     "gida.html",
     "bagis.html",
+    "detay.html",
 }
 
-app = Flask(__name__, static_folder=None)
+app = Flask(__name__, static_folder="assets", template_folder="templetes")
 CORS(app)
+app.secret_key = "reworld_secret_key_2024"  # Güvenli bir anahtar kullan
+
+
+def get_current_user():
+    user_id = session.get('user_id')
+    if not user_id:
+        return None
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT id, username, email FROM users WHERE id=?", (user_id,))
+    user = c.fetchone()
+    conn.close()
+    if user:
+        return {"id": user[0], "username": user[1], "email": user[2]}
+    return None
 
 
 def init_db():
@@ -39,6 +70,7 @@ def init_db():
         """
         CREATE TABLE IF NOT EXISTS ilanlar (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             kategori TEXT NOT NULL,
             baslik TEXT NOT NULL,
             aciklama TEXT,
@@ -47,7 +79,8 @@ def init_db():
             tarih TEXT DEFAULT CURRENT_TIMESTAMP,
             onaylandi INTEGER DEFAULT 0,
             gorsel_yolu TEXT,
-            silme_kodu TEXT
+            silme_kodu TEXT,
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
         """
     )
@@ -60,13 +93,89 @@ def init_db():
         c.execute("ALTER TABLE ilanlar ADD COLUMN silme_kodu TEXT")
     except sqlite3.OperationalError:
         pass
+
+    # Users tablosu
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
     conn.commit()
     conn.close()
 
+@app.route("/api/register", methods=["POST"])
+def register():
+    data = request.get_json() or {}
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
 
-@app.route("/assets/<path:path>")
-def serve_assets(path):
-    return send_from_directory(os.path.join(ROOT, "assets"), path)
+    if not username or not email or not password:
+        return jsonify({"hata": "Tüm alanları doldurun"}), 400
+
+    if len(password) < 6:
+        return jsonify({"hata": "Şifre en az 6 karakter olmalı"}), 400
+
+    password_hash = generate_password_hash(password)
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+                  (username, email, password_hash))
+        user_id = c.lastrowid
+        conn.commit()
+        session['user_id'] = user_id
+        return jsonify({"mesaj": "Kayıt başarılı", "user": {"id": user_id, "username": username, "email": email}}), 201
+    except sqlite3.IntegrityError:
+        return jsonify({"hata": "Kullanıcı adı veya e-posta zaten kullanılıyor"}), 400
+    finally:
+        conn.close()
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.get_json() or {}
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
+        return jsonify({"hata": "E-posta ve şifre gerekli"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "SELECT id, username, email, password_hash FROM users WHERE email=?", (email,))
+    user = c.fetchone()
+    conn.close()
+
+    if user and check_password_hash(user[3], password):
+        session['user_id'] = user[0]
+        return jsonify({"mesaj": "Giriş başarılı", "user": {"id": user[0], "username": user[1], "email": user[2]}}), 200
+    else:
+        return jsonify({"hata": "Geçersiz e-posta veya şifre"}), 401
+
+
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.pop('user_id', None)
+    return jsonify({"mesaj": "Çıkış yapıldı"}), 200
+
+
+@app.route("/api/user", methods=["GET"])
+def get_user():
+    user = get_current_user()
+    if user:
+        return jsonify({"user": user}), 200
+    else:
+        return jsonify({"hata": "Giriş yapmamışsınız"}), 401
 
 
 @app.route("/api/ilanlar", methods=["GET"])
@@ -105,6 +214,10 @@ def get_ilanlar():
 
 @app.route("/api/ilan-olustur", methods=["POST"])
 def create_ilan():
+    user = get_current_user()
+    if not user:
+        return jsonify({"hata": "İlan oluşturmak için giriş yapmalısınız"}), 401
+
     if request.is_json:
         data = request.get_json() or {}
     else:
@@ -115,7 +228,8 @@ def create_ilan():
         if not data.get(field):
             return jsonify({"hata": f"{field} alanı zorunludur"}), 400
 
-    moderasyon = ai_moderasyon(data.get("baslik", ""), data.get("aciklama", ""))
+    moderasyon = ai_moderasyon(
+        data.get("baslik", ""), data.get("aciklama", ""))
 
     if not moderasyon["uygun"]:
         return jsonify(
@@ -143,10 +257,11 @@ def create_ilan():
     c = conn.cursor()
     c.execute(
         """
-        INSERT INTO ilanlar (kategori, baslik, aciklama, sehir, iletisim, onaylandi, gorsel_yolu, silme_kodu)
-        VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+        INSERT INTO ilanlar (user_id, kategori, baslik, aciklama, sehir, iletisim, onaylandi, gorsel_yolu, silme_kodu)
+        VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
         """,
         (
+            user["id"],
             data["kategori"],
             data["baslik"],
             data.get("aciklama", ""),
@@ -162,26 +277,28 @@ def create_ilan():
 
     return jsonify({"mesaj": "İlanınız başarıyla yayınlandı!", "id": ilan_id, "gorsel": gorsel_yolu, "silme_kodu": silme_kodu}), 201
 
+
 @app.route("/api/ilan/<int:ilan_id>", methods=["DELETE"])
 def sil_ilan(ilan_id):
-    data = request.get_json() or {}
-    kodu = data.get("silme_kodu")
-    if not kodu:
-        return jsonify({"hata": "Yetkisiz işlem. Şifre bulunamadı."}), 403
+    user = get_current_user()
+    if not user:
+        return jsonify({"hata": "İlan silmek için giriş yapmalısınız"}), 401
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT silme_kodu, gorsel_yolu FROM ilanlar WHERE id=?", (ilan_id,))
+    c.execute(
+        "SELECT user_id, silme_kodu, gorsel_yolu FROM ilanlar WHERE id=?", (ilan_id,))
     row = c.fetchone()
-    
+
     if not row:
         conn.close()
         return jsonify({"hata": "İlan bulunamadı."}), 404
 
-    db_kodu = row[0]
-    gorsel = row[1]
-    
-    if db_kodu and db_kodu != kodu:
+    db_user_id = row[0]
+    db_kodu = row[1]
+    gorsel = row[2]
+
+    if db_user_id != user["id"]:
         conn.close()
         return jsonify({"hata": "Bu ilanı silme yetkiniz yok!"}), 403
 
@@ -196,6 +313,32 @@ def sil_ilan(ilan_id):
         pass
 
     return jsonify({"mesaj": "İlan raflardan kalıcı olarak silindi."}), 200
+
+
+@app.route("/api/ilan/<int:ilan_id>", methods=["GET"])
+def getir_ilan(ilan_id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        "SELECT id, kategori, baslik, aciklama, sehir, iletisim, tarih, gorsel_yolu, user_id FROM ilanlar WHERE id=?", (ilan_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({"hata": "İlan bulunamadı"}), 404
+
+    ilan = {
+        "id": row[0],
+        "kategori": row[1],
+        "baslik": row[2],
+        "aciklama": row[3],
+        "sehir": row[4],
+        "iletisim": row[5],
+        "tarih": row[6],
+        "gorsel_yolu": row[7],
+        "user_id": row[8]
+    }
+    return jsonify({"ilan": ilan}), 200
 
 
 @app.route("/api/talep", methods=["POST"])
@@ -239,7 +382,8 @@ def ai_moderasyon(baslik: str, aciklama: str) -> dict:
 
 @app.route("/")
 def index():
-    return send_from_directory(ROOT, "index.html")
+    return send_from_directory(TEMPLETES_PATH, "index.html")
+
 
 @app.route("/api/sihirli-ilan", methods=["POST"])
 def sihirli_ilan():
@@ -252,7 +396,7 @@ def sihirli_ilan():
         return jsonify({"hata": "Sihir yapabilmemiz için eşya hakkında birkaç kelime girmelisiniz!"}), 400
 
     ham_metin = f"Kategori: {kategori}\nGirilenler: {baslik} - {aciklama}"
-    
+
     prompt = f"""
     Sen, sürdürülebilir yaşam ve döngüsel ekonomi üzerine kurulu prestijli bir bağış platformu olan 'REWORLD' için çalışan uzman bir metin yazarısın. (Copywriter)
     Amacın, kullanıcıların sisteme girdiği basit, eksik veya sıradan eşya bilgilerini alıp; onları son derece profesyonel, okuyanda saygı ve o eşyaya sahip olma arzusu uyandıran,
@@ -270,48 +414,56 @@ def sihirli_ilan():
     Yalnızca geçerli bir JSON formatı döndür (Asla ```json, ``` vb. markdown formatı kullanma). JSON formatı kesinlikle şu şekilde olmak zorundadır:
     {{"baslik": "...", "aciklama": "...", "kategori": "..."}}
     """
-    
-    req_body = json.dumps({
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.7}
-    }).encode("utf-8")
-    
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
-    req = urllib.request.Request(url, data=req_body, headers={'Content-Type': 'application/json'})
-    
+
     try:
-        with urllib.request.urlopen(req) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            raw_text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
-            
-            if raw_text.startswith("```json"): raw_text = raw_text[7:]
-            if raw_text.startswith("```"): raw_text = raw_text[3:]
-            if raw_text.endswith("```"): raw_text = raw_text[:-3]
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                temperature=0.7,
+                response_mime_type="application/json"
+            )
+        )
+        
+        raw_text = response.text.strip()
 
-            ai_data = json.loads(raw_text.strip())
-            return jsonify(ai_data)
-            
+        # Markdown temizliği (Eğer response_mime_type tam oturmazsa diye tedbir)
+        if raw_text.startswith("```json"):
+            raw_text = raw_text[7:]
+        if raw_text.startswith("```"):
+            raw_text = raw_text[3:]
+        if raw_text.endswith("```"):
+            raw_text = raw_text[:-3]
+
+        ai_data = json.loads(raw_text.strip())
+        return jsonify(ai_data)
+
     except Exception as e:
-        print("Sihirli ilan hatası:", e)
+        error_msg = str(e)
+        print("Sihirli ilan hatası:", error_msg)
+        if "400" in error_msg or "API" in error_msg:
+            return jsonify({"hata": "Google Gemini API Anahtarınız devredışı kalmış, yetkisiz veya yanlış! Lütfen .env dosyası içindeki GEMINI_API_KEY değerini aistudio.google.com adresinden alacağınız yeni bir anahtar ile değiştirin."}), 500
         return jsonify({"hata": "AI Asistan ağa bağlanamadı! Lütfen kendi metninizi kullanın."}), 500
-
 
 @app.route("/<path:name>")
 def serve_html(name):
-    if name not in ALLOWED_HTML:
-        abort(404)
-    return send_from_directory(ROOT, name)
+    allowed_exts = {".css", ".js", ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
+    ext = os.path.splitext(name)[1].lower()
+    if name in ALLOWED_HTML or ext in allowed_exts:
+        return send_from_directory(TEMPLETES_PATH, name)
+    abort(404)
+
 
 @app.route("/api/chatbot", methods=["POST"])
 def chatbot_api():
     if not globals().get("GEMINI_API_KEY"):
         return jsonify({"cevap": "Sistemim şu an uykuda, lütfen API ayarlarımı kontrol edin!"}), 200
-        
+
     data = request.get_json() or {}
     kullanici_mesaji = data.get("mesaj", "")
 
     if not kullanici_mesaji:
-         return jsonify({"cevap": "Lütfen önce bana bir şeyler yazın. 😊"}), 400
+        return jsonify({"cevap": "Lütfen önce bana bir şeyler yazın. 😊"}), 400
 
     prompt = f"""
     Sen, 'REWORLD' sürdürülebilirlik ve bağış platformunun akıllı, dostane ve net cevaplar veren yapay zeka asistanısın. 
@@ -322,29 +474,33 @@ def chatbot_api():
     2. Cümlelerin gramer yapısı mükemmel olmalı. Asla lafı uzatma veya cümleyi yarıda kesme.
     3. Anlam bütünlüğünü koruyarak, düşüncelerini tamamen toparlayarak bitirilmiş kesin bir yanıt üret.
     """
-    
-    req_body = json.dumps({
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.7,
-            "maxOutputTokens": 2048,
-        }
-    }).encode("utf-8")
-
-    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
-    req = urllib.request.Request(api_url, data=req_body, headers={"Content-Type": "application/json"})
 
     try:
-        with urllib.request.urlopen(req) as response:
-            res_data = json.loads(response.read().decode())
-            text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
-            return jsonify({"cevap": text}), 200
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                temperature=0.7,
+                max_output_tokens=2048,
+            )
+        )
+        text = response.text.strip()
+        return jsonify({"cevap": text}), 200
     except Exception as e:
-        print(f"Chatbot Hatası: {str(e)}")
+        error_msg = str(e)
+        print(f"Chatbot Hatası: {error_msg}")
+        if "400" in error_msg or "API_KEY_INVALID" in error_msg or "PermissionDenied" in error_msg:
+             return jsonify({"cevap": "Sistemim şu an uykuda. Görünüşe göre API anahtarımın yetkisi yok, yanlış yazılmış veya süresi dolmuş. Lütfen .env dosyası içerisinden anahtarımı yenileyin! 😔"}), 200
         return jsonify({"cevap": "Üzgünüm, şu an bağlantımda sorun var. 😞 Biraz sonra tekrar dener misiniz?"}), 500
 
+def open_browser():
+    webbrowser.open("http://127.0.0.1:5000")
 
 if __name__ == "__main__":
     init_db()
     print("REWORLD: http://127.0.0.1:5000 — bagis.html içinde REWORLD_USE_FLASK = true kullan.")
+    # sadece reloader değilse tarayıcı aç
+    if not os.environ.get("WERKZEUG_RUN_MAIN"):
+        threading.Timer(1, open_browser).start()
+    
     app.run(debug=True, port=5000)
