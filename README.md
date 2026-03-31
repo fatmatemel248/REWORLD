@@ -1,7 +1,7 @@
 # 🌍 REWORLD
 
 ## Problem
-Dünyada her yıl milyonlarca ton kıyafet, kitap ve gıda israf ediliyor. İnsanlar bağış yapmak istediklerinde hangi kategoriyi seçeceklerine karar vermekte zorlanıyor veya ilan açıklamasını yazmak zahmetli geldiği için vazgeçiyorlar.
+Dünyada her yıl milyonlarca ton kıyafet, kitap ve gıda israf ediliyor. İnsanlar bağış yapmak istediklerinde hangi kategoriyi seçeceklerine karar vermekte zorlanıyor veya ilan açıklamasını yazmak zahmetli geldiği için vazgeçiyorlar.Ayrıca ihtiyaç sahiplerini bulmak ve onlara ulaşmak da bir hayli zahmetli.
 
 ## Çözüm
 REWORLD, bağış sürecini "Vibe Coding" yaklaşımıyla tamamen AI destekli hale getiren bir platformdur. Kullanıcı sadece bağışlayacağı ürünü anlatır; Google Gemini API (Google AI Studio) açıklamayı otomatik optimize eder ve ürünü uygun sınıfa (Kıyafet, Kitap, Gıda) yerleştirir.
